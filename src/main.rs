@@ -12,8 +12,8 @@ enum ActiveTool {
     Settings,
     Exit,
 }
-
-fn main() {
+#[tokio::main]
+async fn main() {
     loop {
         println!("Welcome to Custom Tools!");
         print!("");
@@ -51,7 +51,7 @@ fn main() {
 
                 let ai_action: &str = &ai_action;
 
-                gpt::gpt(ai_action);
+                gpt::gpt(ai_action).await;
 
                 break;
             }

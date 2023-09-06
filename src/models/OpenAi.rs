@@ -1,4 +1,35 @@
+use reqwest;
+use serde::Deserialize;
+use serde_json::json;
 use std::collections::HashMap;
+
+#[derive(Eq, PartialEq, Hash, Deserialize, Debug)]
+pub struct AiUsage {
+    prompt_tokens: u64,
+    completion_tokens: u64,
+    total_tokens: u64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct AiResponse {
+    pub model: String,
+    pub choices: Vec<HashMap<String, String>>,
+    pub usage: HashMap<AiUsage, u64>,
+}
+
+enum AiRoles {
+    System,
+    User,
+}
+
+impl AiRoles {
+    fn as_str(role: &AiRoles) -> String {
+        match role {
+            AiRoles::System => String::from("system"),
+            AiRoles::User => String::from("user"),
+        }
+    }
+}
 
 pub struct OpenAi {
     api_key: String,
@@ -18,7 +49,7 @@ impl OpenAi {
         Self {
             api_key,
             engine,
-            base_url: String::from("https://api.openai.com/v1/"),
+            base_url: String::from("https://api.openai.com/v1"),
             context: vec![{
                 let mut map = HashMap::new();
                 map.insert(String::from("role"), String::from("system"));
@@ -47,5 +78,41 @@ impl OpenAi {
 
     pub fn get_context(&self) -> &Vec<HashMap<String, String>> {
         &self.context
+    }
+
+    pub async fn ask_chat_model(
+        &mut self,
+        user_text: String,
+    ) -> Result<AiResponse, reqwest::Error> {
+        let client = reqwest::Client::new();
+
+        let user_message: HashMap<String, String> = {
+            let mut map = HashMap::new();
+            map.insert(String::from("role"), AiRoles::as_str(&AiRoles::User));
+            map.insert(String::from("content"), user_text);
+            map
+        };
+
+        self.add_to_context(user_message);
+
+        let payload = json!({
+            "model": &self.engine,
+            "messages": &self.get_context()
+        });
+
+        let response = client
+            .post(format!("{}/chat/completions", &self.base_url))
+            .header("Content-Type", "application/json")
+            .header("Authorization", format!("Bearer {}", &self.api_key))
+            .json(&payload)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let ai_response: AiResponse = response.json().await?;
+            Ok(ai_response)
+        } else {
+            panic!("Error: {}", response.status());
+        }
     }
 }
