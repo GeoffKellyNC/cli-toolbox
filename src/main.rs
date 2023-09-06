@@ -1,7 +1,8 @@
 mod ai;
+mod helpers;
+mod models;
 
 use ai::gpt;
-
 
 #[derive(Debug)]
 enum ActiveTool {
@@ -9,22 +10,24 @@ enum ActiveTool {
     SmartDevice,
     Pokemon,
     Settings,
-    Exit
+    Exit,
 }
 
-fn main(){
+fn main() {
     loop {
         println!("Welcome to Custom Tools!");
-        println!("");
+        print!("");
         print!("");
 
         let mut user_command: String = String::new();
 
-        std::io::stdin().read_line(&mut user_command).expect("Command Failed");
+        std::io::stdin()
+            .read_line(&mut user_command)
+            .expect("Command Failed");
 
-        let user_command: &str = &user_command.trim();
+        let user_command: &str = user_command.trim();
 
-        let command: ActiveTool = match user_command { 
+        let command: ActiveTool = match user_command {
             "gpt" => ActiveTool::Ai,
             "device" => ActiveTool::SmartDevice,
             "poke" => ActiveTool::Pokemon,
@@ -32,20 +35,19 @@ fn main(){
             "exit" => ActiveTool::Exit,
             _ => {
                 println!("Unknown Command");
-                continue
+                continue;
             }
         };
 
         match command {
             ActiveTool::Ai => {
-
                 let mut ai_action: String = String::new();
-
-                println!("");
 
                 println!("Ai Instruction: ");
 
-                std::io::stdin().read_line(&mut ai_action).expect("Ai Action Failed");
+                std::io::stdin()
+                    .read_line(&mut ai_action)
+                    .expect("Ai Action Failed");
 
                 let ai_action: &str = &ai_action;
 
@@ -59,7 +61,7 @@ fn main(){
             }
             ActiveTool::SmartDevice => {
                 println!("Smart Devices Chosen!");
-                break
+                break;
             }
             ActiveTool::Settings => {
                 println!("Settings Active");
@@ -70,7 +72,5 @@ fn main(){
                 break;
             }
         }
-
-
     }
 }
