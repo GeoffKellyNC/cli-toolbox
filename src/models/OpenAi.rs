@@ -5,9 +5,9 @@ use std::collections::HashMap;
 
 #[derive(Eq, PartialEq, Hash, Deserialize, Debug)]
 pub struct AiUsage {
-    prompt_tokens: u64,
-    completion_tokens: u64,
-    total_tokens: u64,
+    prompt_tokens: i32,
+    completion_tokens: i32,
+    total_tokens: i32,
 }
 
 #[derive(Deserialize, Debug)]
@@ -30,7 +30,7 @@ pub struct AiResponse {
     pub created: u64,
     pub model: String,
     pub choices: Vec<Choice>,
-    pub usage: HashMap<AiUsage, u64>,
+    pub usage: AiUsage,
 }
 
 enum AiRoles {
@@ -125,11 +125,7 @@ impl OpenAi {
             .await?;
 
         if response.status().is_success() {
-            // Print the raw response
             let raw_response = response.text().await?;
-            println!("Raw Response: {}", raw_response);
-
-            // Now attempt to deserialize
             let ai_response: AiResponse = serde_json::from_str(&raw_response)?;
             Ok(ai_response)
         } else {
