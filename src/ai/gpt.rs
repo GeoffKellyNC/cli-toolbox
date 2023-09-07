@@ -1,6 +1,7 @@
 use crate::helpers::helpers;
 use crate::models::OpenAi::{AiResponse, OpenAi};
 use std::env;
+use std::error::Error;
 
 enum AiTool {
     Chat,
@@ -34,19 +35,15 @@ pub async fn gpt(instruction: &str) {
 
             let user_text: String = helpers::get_user_input("Qestion: ");
 
-            let response_result = open_ai.ask_chat_model(user_text).await;
+            let response_result: Result<AiResponse, Box<dyn Error>> =
+                open_ai.ask_chat_model(user_text).await;
 
             match response_result {
                 Ok(response) => {
-                    println!("Model: {}", response.model);
-                    if let Some(choice) = response.choices.get(0) {
-                        if let Some(text) = choice.get("text") {
-                            println!("Response: {}", text);
-                        }
-                    }
+                    println!("Response: {}", response.choices[0].message.content);
                 }
-                Err(err) => {
-                    println!("Error: {}", err);
+                Err(e) => {
+                    println!("Error: {}", e);
                 }
             }
         }

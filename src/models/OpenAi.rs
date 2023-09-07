@@ -11,9 +11,25 @@ pub struct AiUsage {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct Message {
+    role: String,
+    pub content: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Choice {
+    index: i32,
+    pub message: Message,
+    finish_reason: String,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct AiResponse {
+    pub id: String,
+    pub object: String,
+    pub created: u64,
     pub model: String,
-    pub choices: Vec<HashMap<String, String>>,
+    pub choices: Vec<Choice>,
     pub usage: HashMap<AiUsage, u64>,
 }
 
@@ -83,7 +99,7 @@ impl OpenAi {
     pub async fn ask_chat_model(
         &mut self,
         user_text: String,
-    ) -> Result<AiResponse, reqwest::Error> {
+    ) -> Result<AiResponse, Box<dyn std::error::Error>> {
         let client = reqwest::Client::new();
 
         let user_message: HashMap<String, String> = {
@@ -109,7 +125,12 @@ impl OpenAi {
             .await?;
 
         if response.status().is_success() {
-            let ai_response: AiResponse = response.json().await?;
+            // Print the raw response
+            let raw_response = response.text().await?;
+            println!("Raw Response: {}", raw_response);
+
+            // Now attempt to deserialize
+            let ai_response: AiResponse = serde_json::from_str(&raw_response)?;
             Ok(ai_response)
         } else {
             panic!("Error: {}", response.status());
